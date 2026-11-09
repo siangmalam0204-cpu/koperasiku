@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pinjaman;
 use App\Models\Anggota;
+use App\Services\AngsuranService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -189,53 +190,38 @@ class PinjamanController extends Controller
     }
 
     /**
-     * Mencairkan pinjaman yang telah disetujui.
+     * Mencairkan pinjaman yang telah disetujui,
+     * sekaligus membuat jadwal angsuran.
      */
-    public function disburse(Pinjaman $pinjaman)
-    {
-        DB::transaction(function () use ($pinjaman) {
+    public function disburse(
+        Pinjaman $pinjaman,
+        AngsuranService $angsuranService
+    ) {
+        DB::transaction(function () use ($pinjaman, $angsuranService) {
             $data = Pinjaman::whereKey($pinjaman->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
             if ($data->status !== 'disetujui') {
                 throw ValidationException::withMessages([
-                    'status' => 'Hanya pinjaman yang disetujui dapat dicairkan.',
+                    'status' => 'Hanya pinjaman disetujui yang dapat dicairkan.',
                 ]);
             }
 
+            // Buat seluruh jadwal angsuran
+            $angsuranService->generate($data);
+
+            // Ubah status pinjaman
             $data->update([
                 'status' => 'dicairkan',
                 'disbursed_at' => now(),
             ]);
         });
 
-        return back()->with('success', 'Pinjaman berhasil dicairkan.');
-    }
-
-    /**
-     * Mencatat pelunasan.
-     */
-    public function markPaid(Pinjaman $pinjaman)
-    {
-        DB::transaction(function () use ($pinjaman) {
-            $data = Pinjaman::whereKey($pinjaman->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($data->status !== 'dicairkan') {
-                throw ValidationException::withMessages([
-                    'status' => 'Hanya pinjaman yang sudah dicairkan dapat dilunasi.',
-                ]);
-            }
-
-            $data->update([
-                'status' => 'lunas',
-                'lunas_at' => now(),
-            ]);
-        });
-
-        return back()->with('success', 'Pinjaman berhasil dilunasi.');
+        return back()->with(
+            'success',
+            'Pinjaman berhasil dicairkan dan jadwal angsuran dibuat.'
+        );
     }
 
     /**

@@ -125,6 +125,15 @@
                         </a>
                     </li>
 
+                    <!-- Angsuran -->
+                    <li class="nav-item">
+                        <a href="{{ route('angsuran.index') }}"
+                           class="nav-link {{ request()->routeIs('angsuran.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-money-check-alt"></i>
+                            <p>Manajemen Angsuran</p>
+                        </a>
+                    </li>
+
                     <!-- Manajemen User: Admin -->
                     @if(auth()->user()?->role === 'admin')
                         <li class="nav-item">

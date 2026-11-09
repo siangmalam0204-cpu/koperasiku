@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnggotaController;
+use App\Http\Controllers\AngsuranController;
 use App\Http\Controllers\SimpananController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PinjamanController;
@@ -19,10 +20,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('anggotas', AnggotaController::class);
 
-    // Verifikasi & penolakan: hanya admin, pengurus, bendahara.
-    // Didaftarkan SEBELUM resource agar tidak bentrok dengan {simpanan}.
-    Route::middleware(['auth'])->group(function () {
-
+    // ===== PINJAMAN =====
     Route::resource('pinjaman', PinjamanController::class);
 
     // Proses persetujuan
@@ -43,20 +41,26 @@ Route::middleware('auth')->group(function () {
         [PinjamanController::class, 'disburse']
     )->name('pinjaman.disburse');
 
-    // Proses pelunasan
-    Route::post(
-        '/pinjaman/{pinjaman}/paid',
-        [PinjamanController::class, 'markPaid']
-    )->name('pinjaman.paid');
-
     // Pembatalan
     Route::post(
         '/pinjaman/{pinjaman}/cancel',
         [PinjamanController::class, 'cancel']
     )->name('pinjaman.cancel');
-});
+
+    // ===== ANGSURAN =====
+    Route::get('/angsuran', [AngsuranController::class, 'index'])
+        ->name('angsuran.index');
+
+    Route::get('/angsuran/{angsuran}', [AngsuranController::class, 'show'])
+        ->name('angsuran.show');
+
+    Route::post('/angsuran/{angsuran}/bayar', [AngsuranController::class, 'pay'])
+        ->name('angsuran.pay');
+
+    // ===== SIMPANAN =====
     Route::resource('simpanans', SimpananController::class);
 
+    // ===== USER (khusus admin) =====
     Route::middleware(RoleMiddleware::class . ':admin')->group(function () {
         Route::resource('users', UserController::class)->only(['index', 'update']);
     });

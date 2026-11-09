@@ -150,17 +150,6 @@
                 </form>
             @endif
 
-            {{-- Pelunasan --}}
-            @if($pinjaman->status === 'dicairkan')
-                <form action="{{ route('pinjaman.paid', $pinjaman->id) }}" method="POST">
-                    @csrf
-                    <button class="btn btn-success"
-                            onclick="return confirm('Konfirmasi pelunasan pinjaman?')">
-                        <i class="fas fa-check-circle"></i> Tandai Lunas
-                    </button>
-                </form>
-            @endif
-
             {{-- Pembatalan --}}
             @if(in_array($pinjaman->status, ['diajukan', 'disetujui']))
                 <form action="{{ route('pinjaman.cancel', $pinjaman->id) }}"
@@ -174,6 +163,14 @@
             @endif
 
             <hr>
+
+            {{-- Tautan ke jadwal angsuran --}}
+            @if(in_array($pinjaman->status, ['dicairkan', 'lunas']))
+                <a href="{{ route('angsuran.index', ['search' => $pinjaman->anggota->nama]) }}"
+                   class="btn btn-info">
+                    <i class="fas fa-calendar-alt"></i> Lihat Jadwal Angsuran
+                </a>
+            @endif
 
             <a href="{{ route('pinjaman.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali
